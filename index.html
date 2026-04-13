@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Galang</title>
+  <!-- Google Fonts & Font Awesome 6 -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0c10;
+      color: #eef2ff;
+      line-height: 1.5;
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+
+    /* custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e1f2a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #6c5ce7;
+      border-radius: 10px;
+    }
+
+    /* dynamic gradient background with particles effect */
+    .bg-animate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      background: radial-gradient(circle at 20% 30%, #0d0f1a, #030507);
+    }
+    .bg-animate::before {
+      content: "";
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background: radial-gradient(circle, rgba(108, 92, 231, 0.2) 0%, rgba(0, 0, 0, 0) 70%);
+      animation: rotateBg 30s infinite linear;
+    }
+    @keyframes rotateBg {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Canvas untuk partikel */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    /* glassmorphism container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 0;
+      flex-wrap: wrap;
+      backdrop-filter: blur(12px);
+      background: rgba(10, 12, 18, 0.6);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(108, 92, 231, 0.2);
+      transition: all 0.3s ease;
+    }
+    .navbar.scrolled {
+      background: rgba(10, 12, 18, 0.9);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a78bfa, #4f46e5);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+      animation: glowPulse 3s infinite;
+    }
+    @keyframes glowPulse {
+      0% { text-shadow: 0 0 0px rgba(168,85,247,0); }
+      50% { text-shadow: 0 0 8px rgba(168,85,247,0.6); }
+      100% { text-shadow: 0 0 0px rgba(168,85,247,0); }
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: #d1d5f0;
+      font-weight: 500;
+      transition: 0.3s;
+      font-size: 1rem;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: linear-gradient(90deg, #a78bfa, #6c5ce7);
+      transition: width 0.3s;
+    }
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+    .nav-links a:hover {
+      color: #c084fc;
+    }
+    .menu-toggle {
+      display: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: #eef2ff;
+    }
+
+    /* hero section */
+    .hero {
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 2rem 0;
+    }
+    .badge {
+      background: rgba(108, 92, 231, 0.2);
+      backdrop-filter: blur(4px);
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(108, 92, 231, 0.5);
+      display: inline-block;
+      animation: fadeInUp 0.8s ease;
+    }
+    .hero h1 {
+      font-size: 4rem;
+      font-weight: 800;
+      background: linear-gradient(to right, #f0f0ff, #b1a5ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -1px;
+      animation: fadeInUp 0.8s 0.1s backwards;
+    }
+    .typing-text {
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: #c4b5fd;
+      min-height: 3.5rem;
+      animation: fadeInUp 0.8s 0.2s backwards;
+    }
+    .hero-desc {
+      max-width: 650px;
+      color: #b9c3e6;
+      font-size: 1.1rem;
+      margin: 0.8rem 0;
+      animation: fadeInUp 0.8s 0.3s backwards;
+    }
+    .btn-group {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.2rem;
+      animation: fadeInUp 0.8s 0.4s backwards;
+    }
+    .btn {
+      padding: 0.8rem 2rem;
+      border-radius: 40px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: 0.25s ease;
+      border: 1px solid rgba(108, 92, 231, 0.6);
+      background: rgba(20, 22, 36, 0.6);
+      backdrop-filter: blur(8px);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    .btn:hover::before {
+      left: 100%;
+    }
+    .btn-primary {
+      background: linear-gradient(95deg, #6c5ce7, #a855f7);
+      border: none;
+      box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3);
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3); }
+      50% { box-shadow: 0 8px 25px rgba(108, 92, 231, 0.6); }
+      100% { box-shadow: 0 4px 14px rgba(108, 92, 231, 0.3); }
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px -5px rgba(108, 92, 231, 0.5);
+    }
+    .btn-outline:hover {
+      background: rgba(108, 92, 231, 0.2);
+      border-color: #a78bfa;
+      transform: translateY(-3px);
+    }
+
+    /* section umum */
+    section {
+      padding: 5rem 0;
+    }
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 3rem;
+      background: linear-gradient(120deg, #e0d6ff, #b6a5ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #6c5ce7, #a855f7);
+      border-radius: 3px;
+    }
+
+    /* about grid */
+    .about-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+      align-items: center;
+      justify-content: center;
+    }
+    .about-img {
+      flex: 1;
+      text-align: center;
+    }
+    .avatar {
+      width: 250px;
+      height: 250px;
+      margin: 0 auto;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid rgba(108, 92, 231, 0.6);
+      box-shadow: 0 0 25px rgba(108,92,231,0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s;
+      animation: float 4s infinite ease-in-out;
+    }
+    .avatar:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 35px rgba(108,92,231,0.6);
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+      100% { transform: translateY(0px); }
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .about-text {
+      flex: 2;
+    }
+    .about-text p {
+      margin-bottom: 1rem;
+      font-size: 1.05rem;
+      color: #ccd6f6;
+    }
+
+    /* skills */
+    .skills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      justify-content: center;
+    }
+    .skill-card {
+      background: rgba(30, 32, 48, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 0.8rem 1.8rem;
+      border-radius: 50px;
+      font-weight: 600;
+      border: 1px solid rgba(108, 92, 231, 0.3);
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: default;
+      animation: fadeInScale 0.5s backwards;
+      animation-delay: calc(var(--i, 0) * 0.05s);
+    }
+    .skill-card i {
+      font-size: 1.3rem;
+      color: #b47cff;
+      transition: transform 0.2s;
+    }
+    .skill-card:hover {
+      transform: translateY(-5px) scale(1.05);
+      border-color: #8b5cf6;
+      background: rgba(108, 92, 231, 0.25);
+      box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
+    }
+    .skill-card:hover i {
+      transform: rotate(5deg) scale(1.1);
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* projects grid */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    .project-card {
+      background: rgba(20, 22, 40, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 28px;
+      padding: 1.6rem;
+      border: 1px solid rgba(108, 92, 231, 0.2);
+      transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      overflow: hidden;
+      position: relative;
+      animation: fadeInUp 0.6s backwards;
+      animation-delay: calc(var(--order, 0) * 0.1s);
+    }
+    .project-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+      transition: left 0.6s;
+      pointer-events: none;
+    }
+    .project-card:hover::before {
+      left: 100%;
+    }
+    .project-card:hover {
+      transform: translateY(-12px);
+      border-color: #8b5cf6;
+      box-shadow: 0 25px 35px -12px rgba(0, 0, 0, 0.5);
+      background: rgba(30, 32, 58, 0.9);
+    }
+    .project-icon {
+      font-size: 2.5rem;
+      color: #c084fc;
+      margin-bottom: 1rem;
+      transition: transform 0.3s;
+    }
+    .project-card:hover .project-icon {
+      transform: scale(1.1) rotate(3deg);
+    }
+    .project-card h3 {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+    }
+    .project-tags {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .project-tags span {
+      background: #2a2c44;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+    .project-tags span:hover {
+      background: #6c5ce7;
+      color: white;
+    }
+
+    /* contact */
+    .contact-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3rem;
+      justify-content: space-between;
+    }
+    .contact-info {
+      flex: 1;
+      animation: fadeInLeft 0.8s;
+    }
+    .contact-info h3 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+    .social-icons {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .social-icons a {
+      background: rgba(108, 92, 231, 0.15);
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.5rem;
+      transition: all 0.3s;
+    }
+    .social-icons a:hover {
+      background: #6c5ce7;
+      transform: translateY(-6px) rotate(8deg);
+    }
+    .contact-form {
+      flex: 1;
+      background: rgba(15, 17, 28, 0.5);
+      backdrop-filter: blur(12px);
+      padding: 2rem;
+      border-radius: 2rem;
+      border: 1px solid rgba(108, 92, 231, 0.3);
+      animation: fadeInRight 0.8s;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 1rem;
+      background: #1e1f2e;
+      border: 1px solid #2d2f42;
+      border-radius: 1rem;
+      color: white;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #a78bfa;
+      box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3);
+      transform: scale(1.01);
+    }
+    button[type="submit"] {
+      background: linear-gradient(95deg, #6c5ce7, #a855f7);
+      border: none;
+      width: 100%;
+      padding: 1rem;
+      font-weight: bold;
+      font-size: 1rem;
+      border-radius: 40px;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    button[type="submit"]:hover {
+      transform: scale(0.98);
+      box-shadow: 0 5px 15px rgba(108,92,231,0.4);
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      border-top: 1px solid rgba(108, 92, 231, 0.2);
+      margin-top: 2rem;
+      color: #94a3b8;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .fade-up {
+      opacity: 0;
+      transform: translateY(35px);
+      transition: opacity 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1), transform 0.8s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+      .nav-links {
+        position: fixed;
+        top: 70px;
+        left: -100%;
+        flex-direction: column;
+        background: rgba(10, 12, 20, 0.95);
+        backdrop-filter: blur(20px);
+        width: 70%;
+        height: calc(100vh - 70px);
+        padding: 2rem;
+        gap: 2rem;
+        transition: 0.3s;
+        border-right: 1px solid #6c5ce7;
+        z-index: 99;
+      }
+      .nav-links.active {
+        left: 0;
+      }
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      .typing-text {
+        font-size: 1.3rem;
+      }
+      .section-title {
+        font-size: 2rem;
+      }
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 0 1rem;
+      }
+      .btn-group {
+        flex-direction: column;
+        align-items: center;
+      }
+      .btn {
+        width: 80%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-animate"></div>
+<canvas id="particle-canvas"></canvas>
+
+<nav class="container navbar" id="navbar">
+  <div class="logo"><i class="fas fa-pen-nib"></i> Galang.dev</div>
+  <div class="menu-toggle" id="mobile-menu">
+    <i class="fas fa-bars"></i>
+  </div>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="#home">Beranda</a></li>
+    <li><a href="#about">Tentang</a></li>
+    <li><a href="#skills">Keahlian</a></li>
+    <li><a href="#projects">Proyek</a></li>
+    <li><a href="#contact">Kontak</a></li>
+  </ul>
+</nav>
+
+<main>
+  <section id="home" class="hero container fade-up">
+    <h1>Made Galang</h1>
+    <div class="typing-text" id="typing-effect"></div>
+    <p class="hero-desc">Membangun pengalaman digital yang imersif, cepat, dan estetik. Spesialisasi Frontend & UI/UX modern serta desain grafis.</p>
+    <div class="btn-group">
+      <a href="#projects" class="btn btn-primary"><i class="fas fa-arrow-down"></i> Lihat Proyek</a>
+      <a href="#contact" class="btn btn-outline"><i class="fas fa-paper-plane"></i> Hubungi Saya</a>
+    </div>
+  </section>
+
+  <section id="about" class="container fade-up">
+    <h2 class="section-title">Tentang Saya</h2>
+    <div class="about-grid">
+      <div class="about-img">
+        <div class="avatar">
+          <img src="foto.jpeg" alt="Foto Galang">
+        </div>
+      </div>
+      <div class="about-text">
+        <p>Halo! Saya <strong>MADE GALANG SENTANA</strong>, seorang mahasiswa informatika dengan passion di bidang desain website dan pengalaman pengguna yang standar. Saat ini saya fokus belajar menciptakan website yang tidak hanya fungsional, tetapi juga memiliki sentuhan artistik dan performa tinggi.</p>
+        <p>Dengan pengalaman belajar selama 3 tahun, saya telah mendalami pembuatan website dan desain grafis. Saya percaya bahwa kombinasi antara kode yang bersih dan visual yang menarik mampu menciptakan dampak luar biasa.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills" class="container fade-up">
+    <h2 class="section-title">Keahlian & Teknologi</h2>
+    <div class="skills-container">
+      <div class="skill-card" style="--i:1"><i class="fab fa-html5"></i> HTML5</div>
+      <div class="skill-card" style="--i:2"><i class="fab fa-css3-alt"></i> CSS3</div>
+      <div class="skill-card" style="--i:3"><i class="fab fa-js"></i> JavaScript</div>
+      <div class="skill-card" style="--i:4"><i class="fab fa-laravel"></i> Laravel</div>
+      <div class="skill-card" style="--i:5"><i class="fab fa-php"></i> PHP</div>
+      <div class="skill-card" style="--i:6"><i class="fas fa-paint-brush"></i> CorelDRAW</div>
+      <div class="skill-card" style="--i:7"><i class="fab fa-figma"></i> Figma</div>
+    </div>
+  </section>
+
+  <section id="projects" class="container fade-up">
+    <h2 class="section-title">Proyek Unggulan</h2>
+    <div class="projects-grid">
+      <div class="project-card" style="--order:1">
+        <div class="project-icon"><i class="fas fa-image"></i></div>
+        <h3>Desain Poster Kreatif</h3>
+        <p>Melayani pembuatan poster menarik untuk promosi, event, dan media sosial dengan desain modern dan eye-catching.</p>
+        <div class="project-tags"><span>CorelDRAW</span><span>Canva</span><span>Photoshop</span></div>
+      </div>
+      <div class="project-card" style="--order:2">
+        <div class="project-icon"><i class="fas fa-flag"></i></div>
+        <h3>Desain Spanduk & Banner</h3>
+        <p>Membuat spanduk, banner, dan baliho dengan kualitas HD, cocok untuk kebutuhan promosi usaha dan kegiatan.</p>
+        <div class="project-tags"><span>CorelDRAW</span><span>Illustrator</span><span>Canva</span></div>
+      </div>
+      <div class="project-card" style="--order:3">
+        <div class="project-icon"><i class="fas fa-shopping-cart"></i></div>
+        <h3>E-Commerce Website</h3>
+        <p>Website toko online dengan fitur keranjang belanja, pembayaran online, dan integrasi API untuk transaksi otomatis.</p>
+        <div class="project-tags"><span>PHP</span><span>HTML</span><span>CSS</span><span>JS</span><span>API</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="container fade-up">
+    <h2 class="section-title">Hubungi Saya</h2>
+    <div class="contact-wrapper">
+      <div class="contact-info">
+        <h3>Mari bekerja sama</h3>
+        <p>Saya selalu terbuka untuk diskusi menarik, proyek kolaborasi, atau sekedar ngobrol tentang teknologi & desain.</p>
+        <div class="social-icons">
+          <a href="https://wa.me/+6287819576227" target="_blank"><i class="fab fa-whatsapp"></i></a>
+          <a href="https://www.instagram.com/dhe_galng29" target="_blank"><i class="fab fa-instagram"></i></a>
+        </div>
+        <div style="margin-top: 1.8rem;">
+          <p><i class="fas fa-envelope"></i> madegalang661@gmail.com</p>
+          <p><i class="fas fa-phone-alt"></i> +62 878 1957 6227</p>
+        </div>
+      </div>
+      <div class="contact-form">
+        <form id="contactForm" action="https://formspree.io/f/xvzdpjrl" method="POST">
+          <div class="form-group"><input type="text" name="name" placeholder="Nama lengkap" required></div>
+          <div class="form-group"><input type="email" name="email" placeholder="Email aktif" required></div>
+          <div class="form-group"><textarea name="message" rows="4" placeholder="Pesan..." required></textarea></div>
+          <button type="submit"><i class="fas fa-paper-plane"></i> Kirim Pesan</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <p> Made Galang  <i class="" style="color:#f472b6"></i></p>
+  </div>
+</footer>
+
+<script>
+  // Typing effect
+  const roles = ["Web Developer", "UI/UX Designer", "Creative Coder", "Desain Grafis"];
+  let roleIndex = 0, charIndex = 0, isDeleting = false;
+  const typingElement = document.getElementById("typing-effect");
+  function typeEffect() {
+    const current = roles[roleIndex];
+    if (isDeleting) typingElement.textContent = current.substring(0, charIndex - 1), charIndex--;
+    else typingElement.textContent = current.substring(0, charIndex + 1), charIndex++;
+    if (!isDeleting && charIndex === current.length) { isDeleting = true; setTimeout(typeEffect, 1800); return; }
+    if (isDeleting && charIndex === 0) { isDeleting = false; roleIndex = (roleIndex + 1) % roles.length; setTimeout(typeEffect, 200); return; }
+    setTimeout(typeEffect, isDeleting ? 55 : 95);
+  }
+  typeEffect();
+
+  // Mobile menu
+  const toggle = document.getElementById("mobile-menu");
+  const nav = document.getElementById("nav-links");
+  toggle.addEventListener("click", () => {
+    nav.classList.toggle("active");
+    const icon = toggle.querySelector("i");
+    icon.classList.toggle("fa-bars");
+    icon.classList.toggle("fa-times");
+  });
+  document.querySelectorAll(".nav-links a").forEach(link => {
+    link.addEventListener("click", () => {
+      nav.classList.remove("active");
+      const icon = toggle.querySelector("i");
+      icon.classList.add("fa-bars");
+      icon.classList.remove("fa-times");
+    });
+  });
+
+  // Smooth scroll offset
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener("click", function(e) {
+      const hash = this.getAttribute("href");
+      if (hash && hash !== "#" && hash.startsWith("#")) {
+        e.preventDefault();
+        const target = document.querySelector(hash);
+        if (target) {
+          window.scrollTo({ top: target.offsetTop - 70, behavior: "smooth" });
+          history.pushState(null, null, hash);
+        }
+      }
+    });
+  });
+
+  // Fade-up observer
+  const faders = document.querySelectorAll(".fade-up");
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); obs.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  faders.forEach(el => obs.observe(el));
+  document.querySelector("#home").classList.add("visible");
+
+  // Navbar scroll effect
+  window.addEventListener("scroll", () => {
+    const navbar = document.querySelector(".navbar");
+    if (window.scrollY > 50) navbar.classList.add("scrolled");
+    else navbar.classList.remove("scrolled");
+  });
+
+  // Particles animation (canvas)
+  const canvas = document.getElementById("particle-canvas");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  function createParticles() {
+    const count = Math.min(70, Math.floor(window.innerWidth / 20));
+    particles = [];
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 2 + 1,
+        alpha: Math.random() * 0.5 + 0.2,
+        speedX: (Math.random() - 0.5) * 0.3,
+        speedY: (Math.random() - 0.5) * 0.2,
+      });
+    }
+  }
+  function drawParticles() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(139, 92, 246, ${p.alpha})`;
+      ctx.fill();
+      p.x += p.speedX;
+      p.y += p.speedY;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+    });
+    requestAnimationFrame(drawParticles);
+  }
+  window.addEventListener("resize", () => { resizeCanvas(); createParticles(); });
+  resizeCanvas();
+  createParticles();
+  drawParticles();
+
+  // Form handling with Formspree
+  const form = document.getElementById("contactForm");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      try {
+        const res = await fetch(form.action, { method: "POST", body: data, headers: { Accept: "application/json" } });
+        if (res.ok) { alert("Pesan berhasil dikirim!"); form.reset(); }
+        else alert("Gagal mengirim pesan.");
+      } catch { alert("Terjadi error."); }
+    });
+  }
+</script>
+</body>
+</html>
